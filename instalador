@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-menu () {
+menu() {
 	echo "Escolha a opção:";
 	echo "1 - Instalar programas pós-instalação de sistema."
 	echo "2 - Instalar um programa"
@@ -19,10 +19,8 @@ menu () {
 }
 
 verificaPPA() {
- 	ppaInstalado=$(find /etc/apt/sources.list.d/ -type f -regextype posix-extended -regex ".*$1.*")
-
-	echo $ppaInstalado
-	if [[ -n "$ppaInstalado" ]]; then
+	if grep -q "$1" /etc/apt/sources.list.d/* ; then
+		#arquivo=$(find /etc/apt/sources.list.d/ -type f -regextype posix-extended -regex ".*$1.*.list$")
 		ppaInstalado=1
 	else
 		ppaInstalado=0
@@ -33,7 +31,6 @@ posInstalacao() {
 	# Pega lista de PPAs contida no arquivo ppas
 	mapfile ppas < ppas
 
-	# Itera os ppas verificando se eles existem, caso contrario, adiciona-os
 	for ppa in "${ppas[@]}"; do
 		# Remove palavras indesejadas
 		ppaAtual=$(echo $ppa | sed -e "s/\/ppa//g" -e "s/\/stable//g" -e "s/\-stable//g")
@@ -43,16 +40,39 @@ posInstalacao() {
 			ppaAtual=$(echo $ppaAtual | sed -n 's/\(.*\)\/\(.*\)/\1.*\2/p')
 		fi
 
-		echo $ppaAtual
+		# Verifica se o PPA ja esta adicionado
 		verificaPPA "${ppaAtual}";
 
+		# Senao, adicina-os
 		if [[ "${ppaInstalado}" -eq "false" ]]; then
-			echo "${ppa} não instalado"
+			sudo apt-add-repository -y ppa:"${ppa}"
 		fi
 	done
+
+	# Depois de verificado os PPAs atualiza o sistema
+	atualizarSistema
 }
 #instalarPrograma() {}
-#atualizarSistema() {}
+atualizarSistema() {
+	sudo apt-get update
+	sudo apt-get upgrade -y
+	sudo apt-get dist-upgrade -y
+	sudo apt-get autoclean -y
+	sudo apt-get autoremove -y
+
+	# Verifica se o tema Numix recebeu uma atualizacao
+	# Se sim remove alguns icones que nao gosto no Unity'
+	data=$(date +"%Y-%m-%d")
+	data=$(echo $data | sed 's/\-/\\-/g')
+	histAtualizacao=$(< /var/log/apt/history.log)
+	atualizacaoRecente=$(echo $histAtualizacao | sed "s/.*Start\-Date:\ ${data}\(.*\)./\1/p")
+
+	numixAtualizou=$(grep -o "numix" <<< "$atualizacaoRecente" | wc -l);
+
+	if [[ "${numixAtualizou}" -gt 0 ]] && [[ `ls -1 /usr/share/themes/Numix/unity/launcher_* 2>/dev/null | wc -l ` -gt 0 ]]; then
+		sudo rm -v /usr/share/themes/Numix/unity/launcher_*
+	fi
+}
 
 # Inicia o programa invocando o menu
 menu
