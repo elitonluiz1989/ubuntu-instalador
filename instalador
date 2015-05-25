@@ -1,0 +1,58 @@
+#!/bin/bash
+clear
+menu () {
+	echo "Escolha a opção:";
+	echo "1 - Instalar programas pós-instalação de sistema."
+	echo "2 - Instalar um programa"
+	echo "3 - Atualizar sistemas"
+	echo "4 - Sair"
+
+	read opcao;
+
+	case $opcao in
+		1) posInstalacao ;;
+		2) instalarPrograma ;;
+		3) atualizarSistema ;;
+		4) exit ;;
+		*) "Opcao desconhecida."; menu ;;
+	esac
+}
+
+verificaPPA() {
+ 	ppaInstalado=$(find /etc/apt/sources.list.d/ -type f -regextype posix-extended -regex ".*$1.*")
+
+	echo $ppaInstalado
+	if [[ -n "$ppaInstalado" ]]; then
+		ppaInstalado=1
+	else
+		ppaInstalado=0
+	fi
+}
+
+posInstalacao() {
+	# Pega lista de PPAs contida no arquivo ppas
+	mapfile ppas < ppas
+
+	# Itera os ppas verificando se eles existem, caso contrario, adiciona-os
+	for ppa in "${ppas[@]}"; do
+		# Remove palavras indesejadas
+		ppaAtual=$(echo $ppa | sed -e "s/\/ppa//g" -e "s/\/stable//g" -e "s/\-stable//g")
+		# Verifica se o ppa esta subdividido por /
+		if [[ "$ppaAtual" =~ "/" ]]; then
+			# Separa a subdivisao em dois parametros
+			ppaAtual=$(echo $ppaAtual | sed -n 's/\(.*\)\/\(.*\)/\1.*\2/p')
+		fi
+
+		echo $ppaAtual
+		verificaPPA "${ppaAtual}";
+
+		if [[ "${ppaInstalado}" -eq "false" ]]; then
+			echo "${ppa} não instalado"
+		fi
+	done
+}
+#instalarPrograma() {}
+#atualizarSistema() {}
+
+# Inicia o programa invocando o menu
+menu
