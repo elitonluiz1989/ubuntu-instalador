@@ -1,6 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 clear
+
 menu() {
+	FOLDER=$HOME/.ubuntu-instalador
+
 	echo "Escolha a opção:";
 	echo "1 - Instalar programas pós-instalação de sistema."
 	echo "2 - Instalar um programa"
@@ -14,7 +17,7 @@ menu() {
 		2) instalarPrograma ;;
 		3) atualizarSistema ;;
 		4) exit ;;
-		*) "Opcao desconhecida."; menu ;;
+		*) echo "Opcao desconhecida."; menu ;;
 	esac
 }
 
@@ -29,7 +32,7 @@ verificaPPA() {
 
 posInstalacao() {
 	# Pega lista de PPAs contida no arquivo ppas
-	mapfile ppas < ppas
+	mapfile ppas < $FOLDER/ppas
 
 	for ppa in "${ppas[@]}"; do
 		# Remove palavras indesejadas
@@ -76,3 +79,4 @@ atualizarSistema() {
 
 # Inicia o programa invocando o menu
 menu
+exit;
