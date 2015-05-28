@@ -1,0 +1,7 @@
+sudo apt-get install -y steam oracle-java8-installer oracle-java8-set-default chromium-browser qbittorrent
+cd
+wget http://installer.jdownloader.org/JD2SilentSetup_x64.sh
+sudo chmod +x JD2SilentSetup*.sh
+./JD2SilentSetup*.sh
+rm JD2SilentSetup*.sh
+sudo apt-get remove --purge transmission-*

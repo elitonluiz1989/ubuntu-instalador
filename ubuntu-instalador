@@ -38,7 +38,7 @@ posInstalacao() {
 		# Remove palavras indesejadas
 		ppaAtual=$(echo $ppa | sed -e "s/\/ppa//g" -e "s/\/stable//g" -e "s/\-stable//g")
 		# Verifica se o ppa esta subdividido por /
-		if [[ "$ppaAtual" =~ "/" ]]; then
+		if [[ "${ppaAtual}" =~ "/" ]]; then
 			# Separa a subdivisao em dois parametros
 			ppaAtual=$(echo $ppaAtual | sed -n 's/\(.*\)\/\(.*\)/\1.*\2/p')
 		fi
@@ -53,7 +53,36 @@ posInstalacao() {
 	done
 
 	# Depois de verificado os PPAs atualiza o sistema
-	atualizarSistema
+	#atualizarSistema
+
+	# Cria um ARRAY com os conteiners de tipos de programas
+	arqs=$(find $FOLDER/programas -type f | sed -e 's/ /;/g')
+	arqs=$( echo $arqs | sed -e 's/ /;/g')
+	
+	tiposProgs=${arqs//;/ }
+	echo $tiposProgs
+
+	for tipo in "${tiposProgs[@]}"; do
+		if [ -f $FOLDER/programas/$tipo ]; then
+			titulo=$(echo $tipo | sed -e 's/\(.\)/\U\1/')
+			echo "------ ${titulo} ------"
+
+			# Quebra as linhas do arquivo em um ARRAY para caso de varias instrucoes
+			mapfile instrucoes < $FOLDER/programas/$tipo
+
+			for instrucao in "${instrucoes[@]}"; do
+				# Executa cada instrucao
+				${instrucao}
+			done
+
+			if [[ "${tipo}" == "temas" ]]; then
+				[[ $(ls /usr/share/themes/Numix/unity/launcher_* 2> /dev/null | wc -l ) -gt 0 ]] && (sudo rm -v /usr/share/themes/Numix/unity/launcher_*; exit 1)
+			fi
+		fi
+	done
+
+	sudo apt-get autoclean -y
+	sudo apt-get autoremove -y
 }
 #instalarPrograma() {}
 atualizarSistema() {
@@ -72,7 +101,7 @@ atualizarSistema() {
 
 	numixAtualizou=$(grep -o "numix" <<< "$atualizacaoRecente" | wc -l);
 
-	if [[ "${numixAtualizou}" -gt 0 ]] && [[ `ls -1 /usr/share/themes/Numix/unity/launcher_* 2>/dev/null | wc -l ` -gt 0 ]]; then
+	if [[ "${numixAtualizou}" -gt 0 ]] && [[  $(ls /usr/share/themes/Numix/unity/launcher_* 2> /dev/null | wc -l ) -gt 0 ]]; then
 		sudo rm -v /usr/share/themes/Numix/unity/launcher_*
 	fi
 }
