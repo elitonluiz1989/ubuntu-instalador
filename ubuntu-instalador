@@ -30,37 +30,40 @@ verificaPPA() {
 	fi
 }
 
+addicionarPPA() {
+	# Remove palavras indesejadas
+	ppaAtual=$(echo $1 | sed -e "s/\/ppa//g" -e "s/\/stable//g" -e "s/\-stable//g")
+	# Verifica se o ppa esta subdividido por /
+	if [[ "${ppaAtual}" =~ "/" ]]; then
+		# Separa a subdivisao em dois parametros
+		ppaAtual=$(echo $ppaAtual | sed -n 's/\(.*\)\/\(.*\)/\1.*\2/p')
+	fi
+
+	ppaInstalado=$(find /etc/apt/sources.list.d/ -type f -regextype posix-extended -regex ".*$ppaAtual.*.list$")
+	[ -z "${ppaInstalado}" ] && sudo apt-add-repository -y ppa:${1}
+}
+
 posInstalacao() {
 	# Pega lista de PPAs contida no arquivo ppas
 	mapfile ppas < $FOLDER/ppas
 
+	# Verificando se ha necessidade de instala-los
+	echo "------ PPAs ------"
+	echo "--> Verificando PPAs."
 	for ppa in "${ppas[@]}"; do
-		# Remove palavras indesejadas
-		ppaAtual=$(echo $ppa | sed -e "s/\/ppa//g" -e "s/\/stable//g" -e "s/\-stable//g")
-		# Verifica se o ppa esta subdividido por /
-		if [[ "${ppaAtual}" =~ "/" ]]; then
-			# Separa a subdivisao em dois parametros
-			ppaAtual=$(echo $ppaAtual | sed -n 's/\(.*\)\/\(.*\)/\1.*\2/p')
-		fi
-
-		# Verifica se o PPA ja esta adicionado
-		verificaPPA "${ppaAtual}";
-
-		# Senao, adicina-os
-		if [[ "${ppaInstalado}" -eq "false" ]]; then
-			sudo apt-add-repository -y ppa:"${ppa}"
-		fi
+		addicionarPPA "${ppa}"
 	done
 
 	# Depois de verificado os PPAs atualiza o sistema
-	#atualizarSistema
+	echo "--> Atualizando o sistema."
+	atualizarSistema
 
+	echo "--> Instalando os programas."
 	# Cria um ARRAY com os conteiners de tipos de programas
-	arqs=$(find $FOLDER/programas -type f | sed -e 's/ /;/g')
+	arqs=$(find $FOLDER/programas -type f)
 	arqs=$( echo $arqs | sed -e 's/ /;/g')
-	
+
 	tiposProgs=${arqs//;/ }
-	echo $tiposProgs
 
 	for tipo in "${tiposProgs[@]}"; do
 		if [ -f $FOLDER/programas/$tipo ]; then
@@ -81,8 +84,11 @@ posInstalacao() {
 		fi
 	done
 
+	echo "--> Removendo o lixo."
 	sudo apt-get autoclean -y
 	sudo apt-get autoremove -y
+	echo "---------------------"
+	echo "--> Terminado!"
 }
 #instalarPrograma() {}
 atualizarSistema() {
