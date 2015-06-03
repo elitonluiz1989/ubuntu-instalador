@@ -224,6 +224,25 @@ adicionarVirtualhost() {
 	fi
 }
 
+adicionarRepoRemoto() {
+	echo "--> Informe a URL do repositório."
+	read repo
+
+	if [ -z "${repo}" ]; then
+		echo "-> URL está vazia. Deseja reinserí-la? (S/n)"
+		read decisao
+
+		if [ -z "${decisao}" ] || [ $(mudarCaixa "baixa" "${decisao}") == "s" ]; then
+			adicionarRepoRemoto
+		else
+			exit
+		fi
+	fi
+
+	cd ${1}
+	git remote add origin ${repo}
+}
+
 iniciarGit() {
 	dir_projeto=$HOME/Projetos/${1}
 
@@ -257,7 +276,13 @@ iniciarGit() {
 
 	git init
 
+	echo "--> Deseja adicionar um repositório remoto? (S/n)"
+	read decisao
+
+	[ -z "${decisao}" ] || [ $(mudarCaixa "baixa" "${decisao}") == "s" ] && adicionarRepoRemoto $dir_projeto
+
 	echo "--> Versionamento iniciado."
+	cd ~/
 }
 
 clonarGit() {
@@ -274,7 +299,7 @@ clonarGit() {
 
 			[ -z "${projGit}" ] && clonarGit
 		else
-			echo "--> Deseja voltar ao menu inicial ou sair? (M=menu/s=sair)"
+			echo "--> Deseja voltar ao menu anterior ou sair? (M=menu/s=sair)"
 			read opcao
 
 			if [ -z "${opcao}" ] || [ $(mudarCaixa "baixa" "${opcao}") == "m" ]; then
