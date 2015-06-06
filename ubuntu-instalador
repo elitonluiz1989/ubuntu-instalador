@@ -158,12 +158,6 @@ atualizarSistema() {
 	data=$(echo $data | sed 's/\-/\\-/g')
 	histAtualizacao=$(< /var/log/apt/history.log)
 	atualizacaoRecente=$(echo $histAtualizacao | sed "s/.*Start\-Date:\ ${data}\(.*\)./\1/p")
-
-	numixAtualizou=$(grep -o "numix" <<< "$atualizacaoRecente" | wc -l);
-
-	if [[ "${numixAtualizou}" -gt 0 ]] && [[  $(ls /usr/share/themes/Numix/unity/launcher_* 2> /dev/null | wc -l ) -gt 0 ]]; then
-		sudo rm -v /usr/share/themes/Numix/unity/launcher_*
-	fi
 }
 
 # Projetos
