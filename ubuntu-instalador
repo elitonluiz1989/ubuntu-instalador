@@ -72,12 +72,12 @@ posInstalacao() {
 	tiposProgs=${arqs//;/ }
 
 	for tipo in "${tiposProgs[@]}"; do
-		if [ -f $FOLDER/programas/$tipo ]; then
+		if [ -f $tipo ]; then
 			titulo=$(echo $tipo | sed -e 's/\(.\)/\U\1/')
 			echo "------ ${titulo} ------"
 
 			# Quebra as linhas do arquivo em um ARRAY para caso de varias instrucoes
-			mapfile instrucoes < $FOLDER/programas/$tipo
+			mapfile instrucoes < $tipo
 
 			for instrucao in "${instrucoes[@]}"; do
 				# Executa cada instrucao
