@@ -67,9 +67,8 @@ posInstalacao() {
 	echo "--> Instalando os programas."
 	# Cria um ARRAY com os conteiners de tipos de programas
 	arqs=$(find $FOLDER/programas -type f)
-	arqs=$( echo $arqs | sed -e 's/ /;/g')
 
-	tiposProgs=${arqs//;/ }
+	IFS='' read -r -a tiposProgs <<< "${arqs}"
 
 	for tipo in "${tiposProgs[@]}"; do
 		if [ -f $tipo ]; then
