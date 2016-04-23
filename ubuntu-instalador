@@ -38,16 +38,6 @@ main() {
 	esac
 }
 
-mudarCaixa() {
-	if [ "${1}" == "alta" ]; then
-		caixa='\U'
-	else
-		caixa='\L'
-	fi
-
-	echo $(echo $2 | sed -e "s/\(.\)/${caixa}\1/g")
-}
-
 versionamentoGit() {
 	echo "Escolha a opção:";
 	echo "1 - Criar um repositório."
