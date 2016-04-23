@@ -48,6 +48,328 @@ mudarCaixa() {
 	echo $(echo $2 | sed -e "s/\(.\)/${caixa}\1/g")
 }
 
+<<<<<<< HEAD
+=======
+adicionarPPA() {
+	# Remove palavras indesejadas
+	ppaAtual=$(echo $1 | sed -e "s/\/ppa//g" -e "s/\/stable//g" -e "s/\-stable//g")
+	# Verifica se o ppa esta subdividido por /
+	if [[ "${ppaAtual}" =~ "/" ]]; then
+		# Separa a subdivisao em dois parametros
+		ppaAtual=$(echo $ppaAtual | sed -n 's/\(.*\)\/\(.*\)/\1.*\2/p')
+	fi
+
+	ppaInstalado=$(find /etc/apt/sources.list.d/ -type f -regextype posix-extended -regex ".*$ppaAtual.*.list$")
+	[ -z "${ppaInstalado}" ] && sudo apt-add-repository -y ppa:${1}
+}
+
+posInstalacao() {
+	# Pega lista de PPAs contida no arquivo ppas
+	mapfile ppas < $FOLDER/ppas
+
+	# Verificando se ha necessidade de instala-los
+	echo "------ PPAs ------"
+	echo "--> Verificando PPAs."
+	for ppa in "${ppas[@]}"; do
+		adicionarPPA "${ppa}"
+	done
+
+	# Depois de verificado os PPAs atualiza o sistema
+	atualizarSistema
+
+	echo "--> Instalando os programas."
+	# Cria um ARRAY com os conteiners de tipos de programas
+	arqs=$(find $FOLDER/programas -type f)
+
+	IFS='' read -r -a tiposProgs <<< "${arqs}"
+
+	for tipo in "${tiposProgs[@]}"; do
+		if [ -f $tipo ]; then
+			titulo=$(echo $tipo | sed -e 's/\(.\)/\U\1/')
+			echo "------ ${titulo} ------"
+
+			# Quebra as linhas do arquivo em um ARRAY para caso de varias instrucoes
+			mapfile instrucoes < $tipo
+
+			for instrucao in "${instrucoes[@]}"; do
+				# Executa cada instrucao
+				${instrucao}
+			done
+
+			if [[ "${tipo}" == "temas" ]]; then
+				[[ $(ls /usr/share/themes/Numix/unity/launcher_* 2> /dev/null | wc -l ) -gt 0 ]] && (sudo rm -v /usr/share/themes/Numix/unity/launcher_*; exit 1)
+			fi
+		fi
+	done
+
+	echo "--> Removendo o lixo."
+	sudo apt-get autoclean -y
+	sudo apt-get autoremove -y
+	echo "---------------------"
+	echo "--> Terminado!"
+}
+
+instalarPrograma() {
+	if [ "$1" != "semPPA" ]; then
+		echo "--> Instalar progrma com PPA? (s/N)"
+		read comPPA
+
+		if [ "${comPPA}" == "s" ]; then
+			echo "Informe o PPA:"
+			read ppa
+
+			ppa=$(echo $ppa | sed -n 's/\(.*\):\(.*\)/\2/p')
+
+			[ ! -z "${ppa}" ] && adicionarPPA $ppa
+
+			sudo apt-get update
+		fi
+	fi
+
+	echo "--> Informe o nome do programa:"
+	read programa
+
+	if [ -z "${programa}" ]; then
+		echo "--> Erro: programa não informado!"
+		echo "-> Deseja redigitar? S/n"
+		read reiniciar
+
+		reiniciar=$(echo $reiniciar || sed -e 's/\(.\)/\L\1/')
+		if [ -z "${reiniciar}" ] || [ "${reiniciar}" == "s" ]; then
+			instalarPrograma "semPPA"
+		else
+			echo "--> Deseja voltar para o menu inicial? (S=sim/N=sair)"
+			read opcao
+
+			opcao=$(echo $opcao | sed -e 's/\(.\)/\L\1/')
+			if [ -z "${opcao}" ] || [ "${opcao}" == "s" ]; then
+				menu
+			else
+				echo "---> Até mais!"
+				exit;
+			fi
+		fi
+	else
+		sudo apt-get install -y ${programa}
+	fi
+}
+
+
+atualizarSistema() {
+	echo "--> Atualizando o sistema."
+
+	sudo apt-get update
+	sudo apt-get upgrade -y
+	sudo apt-get dist-upgrade -y
+	sudo apt-get autoclean -y
+	sudo apt-get autoremove -y
+
+	# Verifica se o tema Numix recebeu uma atualizacao
+	# Se sim remove alguns icones que nao gosto no Unity'
+	data=$(date +"%Y-%m-%d")
+	data=$(echo $data | sed 's/\-/\\-/g')
+	histAtualizacao=$(< /var/log/apt/history.log)
+	atualizacaoRecente=$(echo $histAtualizacao | sed "s/.*Start\-Date:\ ${data}\(.*\)./\1/p")
+}
+
+# Projetos
+
+adicionarVirtualhost() {
+	virtualhost=/etc/apache2/sites-available/${1}.conf
+
+	if [ -f "${virtualhost}" ]; then
+		echo "--> Já existe um arquivo conf com o nome do projeto."
+		echo "--> Deseja editá-lo? (S/n)"
+		read decisao
+
+		[ -z "${decisao}" ] || [ $(mudarCaixa "baixa" "${decisao}") == "s" ] && (sudo nano $virtualhost; exit 1)
+	else
+		sudo touch $virtualhost
+
+		virtualhostConteudo+="<VirtualHost *:80>\n"
+		virtualhostConteudo+="	\n"
+		virtualhostConteudo+="	ServerName ${1}.local\n"
+		virtualhostConteudo+="	\n"
+		virtualhostConteudo+="	ServerAlias www.${1}.local\n"
+		virtualhostConteudo+="	\n"
+		virtualhostConteudo+="	DocumentRoot $HOME/Projetos/${1}\n"
+		virtualhostConteudo+="	\n"
+		virtualhostConteudo+="	ErrorLog $HOME/Projetos/${1}/error.log\n"
+		virtualhostConteudo+="	\n"
+		virtualhostConteudo+="	<Directory $HOME/Projetos/${1}>\n"
+		virtualhostConteudo+="		\n"
+		virtualhostConteudo+="		DirectoryIndex index.php\n"
+		virtualhostConteudo+="		\n"
+		virtualhostConteudo+="		AllowOverride All\n"
+		virtualhostConteudo+="		\n"
+		virtualhostConteudo+="		Require all granted\n"
+		virtualhostConteudo+="		\n"
+		virtualhostConteudo+="	</Directory>\n"
+		virtualhostConteudo+="	\n"
+		virtualhostConteudo+="</VirtualHost>";
+
+		echo -e "${virtualhostConteudo}" | sudo tee "${virtualhost}"
+	fi
+
+	# Verifica se o modulo rewrite esta habilitado
+	[ -z $(find /etc/apache2/mods-enabled/ -regextype posix-extended -regex ".*rewrite.*") ] && {
+		sudo a2enmod rewrite
+		sudo service apache2 restart
+	}
+
+	if [ -z $(find /etc/apache2/sites-enabled/ -regextype posix-extended -regex ".*${1}.*") ]; then
+		sudo a2ensite ${1}.conf
+
+		echo -e "\n127.0.1.1\t${1}.local\twww.${1}.local" | sudo tee -a /etc/hosts
+
+		sudo service apache2 restart
+
+		echo "VirtualHost adicionado!"
+	else
+		echo "VirtualHost já adicionado!"
+	fi
+}
+
+adicionarRepoRemoto() {
+	echo "--> Informe a URL do repositório."
+	read repo
+
+	if [ -z "${repo}" ]; then
+		echo "-> URL está vazia. Deseja reinserí-la? (S/n)"
+		read decisao
+
+		if [ -z "${decisao}" ] || [ $(mudarCaixa "baixa" "${decisao}") == "s" ]; then
+			adicionarRepoRemoto
+		else
+			exit
+		fi
+	fi
+
+	cd ${1}
+	git remote add origin ${repo}
+}
+
+iniciarGit() {
+	dir_projeto=$HOME/Projetos/${1}
+
+	if [ -z "${1}" ] || [ ! -d ${dir_projeto} ]; then
+		echo "--> Diretório não encontrado. Deseja redigitá-lo? (S/n)"
+		read decisao
+
+		if [ -z "$decisao" ] || [ $(mudarCaixa "baixa" "${decisao}") == "s" ]; then
+			echo "--> Digite o nome da pasta do projeto."
+			read dir_projeto
+
+			if [ -z "${dir_projeto}" ] || [ ! -d "${HOME}/Projetos/${dir_projeto}" ]; then
+				iniciarGit
+			else
+				dir_projeto=$HOME/Projetos/$dir_projeto
+			fi
+		else
+			echo "--> Deseja voltar ao menu inicial ou sair? (M=menu/s=sair)"
+			read opcao
+
+			if [ -z "${opcao}" ] || [ $(mudarCaixa "baixa" "${opcao}") == "m" ]; then
+				projetos
+			else
+				exit
+			fi
+		fi
+	fi
+
+	# Entrando no diretorio do projeto
+	cd ${dir_projeto}
+
+	git init
+
+	echo "--> Deseja adicionar um repositório remoto? (S/n)"
+	read decisao
+
+	[ -z "${decisao}" ] || [ $(mudarCaixa "baixa" "${decisao}") == "s" ] && adicionarRepoRemoto $dir_projeto
+
+	echo "--> Versionamento iniciado."
+	cd ~/
+}
+
+clonarGit() {
+	echo "-> Informe a URL do projeto a ser clonado."
+	read projGit
+
+	if [ -z "${projGit}" ]; then
+		echo "-> URL do projeto vazia. Deseja reinserí-la? (S/n)"
+		read decisao
+
+		if [ -z "${decisao}" ] || [ $(mudarCaixa "baixa" "${decisao}") == "s" ]; then
+			echo "-> Informe a URL do projeto a ser clonado."
+			read projGit
+
+			[ -z "${projGit}" ] && clonarGit
+		else
+			echo "--> Deseja voltar ao menu anterior ou sair? (M=menu/s=sair)"
+			read opcao
+
+			if [ -z "${opcao}" ] || [ $(mudarCaixa "baixa" "${opcao}") == "m" ]; then
+				projetos
+			else
+				exit
+			fi
+		fi
+	fi
+
+	cd $HOME/Projetos
+	git clone ${projGit}
+	cd ~/
+}
+
+criarProjeto() {
+	echo "---> Defina o nome do projeto:"
+	read projeto
+
+	if [ -z "${projeto}" ]; then
+		echo "---> Nome do projeto está vazio."
+		echo "---> Deseja reinserí-lo? (S/n)"
+		read reiniciar
+
+		if [ -z "${reiniciar}" ] || [ $(mudarCaixa "baixa" "${reiniciar}") == "s" ]; then
+			criarProjetos
+		else
+			echo "--> Deseja voltar ao menu inicial ou sair? (M=menu/s=sair)"
+			read opcao
+
+			if [ -z "${opcao}" ] || [ $(mudarCaixa "baixa" "${opcao}") == "m" ]; then
+				menu
+			else
+				exit
+			fi
+		fi
+	else
+		projeto=$(mudarCaixa "baixa" "${projeto}")
+
+		dir_projeto=${dir_projetos}/${projeto}
+
+		if [ -d "${dir_projeto}" ]; then
+			echo "--> A pasta do projeto ${projeto} já existe."
+			echo "--> Talvez o projeto já tenha sido criado."
+			echo "--> Deseja continuar? (S/n)"
+			read decisao
+
+			[ -z "${decisao}" ] || [ $(mudarCaixa "baixa" "${decisao}") == "s" ] || exit
+		else
+			mkdir -v $dir_projeto
+		fi
+
+		echo "--> Deseja criar um VirtualHost? (S/n)";
+		read decisao
+
+		[ -z "${decisao}" ] || [ $(mudarCaixa "baixa" "${decisao}") == "s" ] && adicionarVirtualhost $projeto
+
+		echo "--> Deseja iniciar versionamento com GIT? (S/n)"
+		read decisao
+		[ -z "${decisao}" ] || [ $(mudarCaixa "baixa" "${decisao}") == "s" ] && iniciarGit $projeto
+	fi
+}
+
+>>>>>>> 83b08a04576ad81d47cb435f8504972f1b7fbc05
 versionamentoGit() {
 	echo "Escolha a opção:";
 	echo "1 - Criar um repositório."
