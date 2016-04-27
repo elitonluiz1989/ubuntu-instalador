@@ -36,6 +36,7 @@ adicionarVirtualhost() {
 		[ -z "${decisao}" ] || [ "${decisao,,}" == "s" ] && (sudo nano $virtualhost; exit 1)
 	else
 		servername="${1}.dev"
+		docroot=""
 		logDir="logs"
 
 		echo "Deseja definir o severname do projeto?(s/N)"
@@ -45,15 +46,29 @@ adicionarVirtualhost() {
 			read servername
 		}
 		definirServername
+		
+		echo "Deseja definir o Document Root do projeto (Ex.: public)?(s/N)"
+		read decisao
+		[ "${decisao,,}" == "s" ] && {
+			echo "Digite o docroot."
+			read docroot
+			
+			[ "${docroot}" != "${dir_projeto}" ] && {
+				docroot="${dir_projeto}/${docroot}"
+				mkdir -v "${docroot}"
+				sudo chmod -R 775 "${docroot}"
+			}
+		}
+		
 
-		echo "Deseja definir o diretório de logs?(s/N)"
+		echo "Deseja definir o diretório de logs (Ex.: storage/logs)?(s/N)"
 		read decisao
 		[ "${decisao,,}" == "s" ] && {
 			echo "Digite o diretório de logs"
 			read logDir
 		}
 
-		[ ! -d "${dir_projeto}/$logDir" ] && (mkdir -pv "${dir_projeto}/$logDir"; exit 1 )
+		[ ! -d "${dir_projeto}/$logDir" ] && (mkdir -pv "${dir_projeto}/${logDir}"; exit 1 )
 
 		sudo touch $virtualhost
 
@@ -63,11 +78,11 @@ adicionarVirtualhost() {
 		virtualhostConteudo+="	\n"
 		virtualhostConteudo+="	ServerAlias www.${servername}\n"
 		virtualhostConteudo+="	\n"
-		virtualhostConteudo+="	DocumentRoot ${dir_projeto}\n"
+		virtualhostConteudo+="	DocumentRoot ${docroot}\n"
 		virtualhostConteudo+="	\n"
 		virtualhostConteudo+="	ErrorLog ${dir_projeto}/${logDir}/error.log\n"
 		virtualhostConteudo+="	\n"
-		virtualhostConteudo+="	<Directory ${dir_projeto}>\n"
+		virtualhostConteudo+="	<Directory ${docroot}>\n"
 		virtualhostConteudo+="		\n"
 		virtualhostConteudo+="		DirectoryIndex index.html index.php\n"
 		virtualhostConteudo+="		\n"
