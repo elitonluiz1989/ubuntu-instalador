@@ -6,7 +6,7 @@ definirServername() {
 		read servername
 
 		definirServername $servername
-	else	
+	else
 		verificarHost=$(grep "${servername}" "/etc/hosts")
 		if [ ! -z "${verificarHost}" ]; then
 			echo "O servername que utilizou já está definido no arquivo hosts. Deseja inserir outro?(S/n)"
@@ -25,7 +25,7 @@ definirServername() {
 }
 
 adicionarVirtualhost() {
-	dir_projeto="${HOME}/Projetos/Web/${1}"
+	dir_projeto="${HOME}/dev/Web/${1}"
 	virtualhost=/etc/apache2/sites-available/${1}.conf
 
 	if [ -f "${virtualhost}" ]; then
@@ -46,20 +46,20 @@ adicionarVirtualhost() {
 			read servername
 		}
 		definirServername
-		
+
 		echo "Deseja definir o Document Root do projeto (Ex.: public)?(s/N)"
 		read decisao
 		[ "${decisao,,}" == "s" ] && {
 			echo "Digite o docroot."
 			read docroot
-			
+
 			[ "${docroot}" != "${dir_projeto}" ] && {
 				docroot="${dir_projeto}/${docroot}"
-				mkdir -v "${docroot}"
+				sudo mkdir -v "${docroot}"
 				sudo chmod -R 775 "${docroot}"
 			}
 		}
-		
+
 
 		echo "Deseja definir o diretório de logs (Ex.: storage/logs)?(s/N)"
 		read decisao
@@ -68,7 +68,7 @@ adicionarVirtualhost() {
 			read logDir
 		}
 
-		[ ! -d "${dir_projeto}/$logDir" ] && (mkdir -pv "${dir_projeto}/${logDir}"; exit 1 )
+		[ ! -d "${dir_projeto}/$logDir" ] && (sudo mkdir -pv "${dir_projeto}/${logDir}"; exit 1 )
 
 		sudo touch $virtualhost
 

@@ -57,8 +57,8 @@ versionamentoGit() {
 
 projetos () {
 	# Define a pasta de projetos
-	dir_projetos="${HOME}/Projetos/Web"
-	
+	dir_projetos="${HOME}/Dev/Web"
+
 	echo "Escolha a opção:";
 	echo "1 - Criar projeto."
 	echo "2 - Adicionar VirtualHost."

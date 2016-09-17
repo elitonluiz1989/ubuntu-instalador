@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 clonarGit() {
+	dir="${1}"
 	echo "-> Informe a URL do projeto a ser clonado."
 	read projGit
 
@@ -24,7 +25,10 @@ clonarGit() {
 		fi
 	fi
 
-	cd $HOME/Projetos
+	if [ -n "${dir}" ]; then
+		projGit+=" ${dir}"
+	fi
+
 	git clone ${projGit}
 	cd ~/
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 criarProjeto() {
-	
+
 	echo "---> Defina o nome do projeto:"
 	read projeto
 
@@ -23,7 +23,7 @@ criarProjeto() {
 		fi
 	else
 		projeto="${projeto,,}"
-	
+
 		dir_projeto=${dir_projetos}/${projeto}
 
 		if [ -d "${dir_projeto}" ]; then
@@ -45,5 +45,9 @@ criarProjeto() {
 		echo "--> Deseja iniciar versionamento com GIT? (S/n)"
 		read decisao
 		[ -z "${decisao}" ] || [ "${decisao,,}" == "s" ] && iniciarGit $projeto
+
+		echo "--> Deseja clonar projeto com GIT? (S/n)"
+		read decisao
+		[ -z "${decisao}" ] || [ "${decisao,,}" == "s" ] && clonarGit $dir_projeto
 	fi
 }
