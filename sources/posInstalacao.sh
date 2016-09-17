@@ -19,7 +19,7 @@ instalacaoPadrao() {
 
 			# Cria um string com as linhas do arquivo
 			pacotes=$(cat $instrucao)
-			sudo apt-get install -y $pacotes
+			sudo apt install -y $pacotes
 		fi
 	done
 }
@@ -60,8 +60,8 @@ posInstalacao() {
 	instalacaoManual
 
 	echo "--> Removendo o lixo."
-	sudo apt-get autoclean -y
-	sudo apt-get autoremove -y
+	sudo apt autoclean -y
+	sudo apt autoremove -y
 	echo "---------------------"
 	echo "--> Terminado!"
 }

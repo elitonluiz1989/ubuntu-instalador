@@ -12,7 +12,7 @@ instalarPrograma() {
 
 			[ ! -z "${ppa}" ] && adicionarPPA $ppa
 
-			sudo apt-get update
+			sudo apt update
 		fi
 	fi
 
@@ -40,6 +40,6 @@ instalarPrograma() {
 			fi
 		fi
 	else
-		sudo apt-get install -y ${programa}
+		sudo apt install -y ${programa}
 	fi
 }
