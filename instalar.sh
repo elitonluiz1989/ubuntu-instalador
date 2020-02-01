@@ -1,5 +1,12 @@
 #!/bin/bash
-sudo chmod +x -v $HOME/.ubuntu-instalador/ubuntu-instalador
+echo "Deixando programa executável."
+sudo chmod +x -v ./ubuntu-instalador
 
-sudo ln -s -v $HOME/.ubuntu-instalador/ubuntu-instalador /bin/
+if [ ! -d "$HOME/bin" ] ; then
+  echo "Criando a pasta \"bin\" na pasta do usuário"
+  mkdir "$HOME/bin"
+fi
+
+echo "Adicinando o programa a pasta \"bin.\""
+sudo ln -s -v ./ubuntu-instalador "$HOME/bin/"
 exit;
